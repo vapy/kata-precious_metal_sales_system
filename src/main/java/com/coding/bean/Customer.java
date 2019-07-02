@@ -16,7 +16,8 @@ public class Customer {
 	private String memberNo;
 	//会员积分
 	private BigDecimal memberPoints;
-
+	
+	
 	public Customer(String name, String memberType, String memberNo, BigDecimal memberPoints) {
 		super();
 		this.name = name;
@@ -48,5 +49,4 @@ public class Customer {
 	public void setMemberPoints(BigDecimal memberPoints) {
 		this.memberPoints = memberPoints;
 	}
-	
 }

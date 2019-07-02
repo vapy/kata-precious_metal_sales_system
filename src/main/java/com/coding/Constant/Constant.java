@@ -9,4 +9,9 @@ public class Constant {
 	public static String DISCOUNT_LIST_DESC_1000 = "每满1000元减10";
 	public static String DISCOUNT_LIST_DESC_01 = "第3件半价";
 	public static String DISCOUNT_LIST_DESC_02 = "满3送1";
+
+	public final static String MEMBER_TYPE_01 = "普卡";
+	public final static String MEMBER_TYPE_02 = "金卡";
+	public final static String MEMBER_TYPE_03 = "白金卡";
+	public final static String MEMBER_TYPE_04 = "钻石卡";
 }

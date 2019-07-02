@@ -21,7 +21,7 @@ public class ProductInfo {
 	private String discountCoupon;
 	//打折券列表
 	private List<String> discountList;
-
+	
 	public ProductInfo(String productNo, String productName, BigDecimal price, String discountCoupon,
 			List<String> discountList) {
 		super();
