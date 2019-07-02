@@ -31,7 +31,7 @@ public class Sales {
 	//应收金额
 	private static BigDecimal receivables = new BigDecimal(0);
 	//付款使用的打折券
-	private static List<String> discountCards = new ArrayList<String>();
+	private static List<String> discountCards = new ArrayList<>();
 	//本次消费会员新增的积分
 	private static BigDecimal memberPointsIncreased = new BigDecimal(0);
 	//当前用户
@@ -55,9 +55,8 @@ public class Sales {
 		productInfoMap.put("002002", new ProductInfo("002002", "中国经典钱币套装", new BigDecimal(998.00), "", new ArrayList<String>() {{add(Constant.DISCOUNT_LIST_DESC_2000);add(Constant.DISCOUNT_LIST_DESC_1000);}}));
 		productInfoMap.put("002001", new ProductInfo("002001", "守扩之羽比翼双飞4.8g", new BigDecimal(1080.00), Constant.DISCOUNT_COUPON_DESC_95, new ArrayList<String>() {{add(Constant.DISCOUNT_LIST_DESC_01);add(Constant.DISCOUNT_LIST_DESC_02);}}));
 		productInfoMap.put("002003", new ProductInfo("002003", "中国银象棋12g", new BigDecimal(698.00), Constant.DISCOUNT_COUPON_DESC_90, new ArrayList<String>() {{add(Constant.DISCOUNT_LIST_DESC_3000);add(Constant.DISCOUNT_LIST_DESC_2000);add(Constant.DISCOUNT_LIST_DESC_1000);}}));
-
-		
 	}
+
 	public static OrderRepresentation sales(OrderCommand command) {
 		//获取用户信息
 		String memberId = command.getMemberId();
@@ -91,9 +90,7 @@ public class Sales {
 		}
 		List<PaymentRepresentation> paymentRepresentationList = getPaymentRepresentations(paymentCommandList);
 		getMemberPointsIncreased();
-		OrderRepresentation orderRepresentation = new OrderRepresentation(orderId,date,memberId,customer.getName(),oldMemberType,newMemberType,memberPointsIncreased.intValue(),memberPoints.intValue(),orderItemRepresentationList,totalPrice,discountItemRepresentationList,totalDiscountPrice,receivables,paymentRepresentationList,discountCards);
-		return orderRepresentation;
-		
+		return new OrderRepresentation(orderId,date,memberId,customer.getName(),oldMemberType,newMemberType,memberPointsIncreased.intValue(),memberPoints.intValue(),orderItemRepresentationList,totalPrice,discountItemRepresentationList,totalDiscountPrice,receivables,paymentRepresentationList,discountCards);
 	}
 	/**
 	 * 获取销售凭证中的订单行列表
@@ -101,7 +98,7 @@ public class Sales {
 	 * @return
 	 */
 	private static List<OrderItemRepresentation> getOrderItemRepresentation(List<OrderItemCommand> orderItemCommandList){
-		List<OrderItemRepresentation> list = new ArrayList<OrderItemRepresentation>();
+		List<OrderItemRepresentation> list = new ArrayList<>();
 		for(Iterator<OrderItemCommand> itr = orderItemCommandList.iterator();itr.hasNext();){
 			OrderItemCommand orderItemCommand = itr.next();
 			//获取商品编号
@@ -123,7 +120,7 @@ public class Sales {
 	 * @return
 	 */
 	private static List<DiscountItemRepresentation> getDiscountItemRepresentation(List<OrderItemCommand> orderItemCommandList,List<String> discounts){
-		List<DiscountItemRepresentation> list = new ArrayList<DiscountItemRepresentation>();
+		List<DiscountItemRepresentation> list = new ArrayList<>();
 		for(OrderItemCommand orderItemCommand : orderItemCommandList){
 			//获取商品编号
 			String productNo = orderItemCommand.getProduct();
@@ -140,48 +137,16 @@ public class Sales {
 			BigDecimal discountCouponAmount = new BigDecimal(0);
 			String discountCouponDESC = "";
 			if(null != discountCoupon && !"".equals(discountCoupon)){
-				if(Constant.DISCOUNT_COUPON_DESC_90.equals(discountCoupon)){
-					if(discounts.contains(discountCoupon)){
-						//计算9折优惠后金额
-						discountCouponAmount = subTotal.multiply(new BigDecimal("0.1"));
-						discountCouponDESC = Constant.DISCOUNT_COUPON_DESC_90;
-					}
-				}else if(Constant.DISCOUNT_COUPON_DESC_95.equals(discountCoupon)){
-					if(discounts.contains(discountCoupon)){
-						//计算95折优惠后金额
-						discountCouponAmount = subTotal.multiply(new BigDecimal("0.05"));
-						discountCouponDESC = Constant.DISCOUNT_COUPON_DESC_95;
-					}
-				}
+				Map<String,Object> map = getDiscountCouponAmount(discounts, discountCoupon, subTotal);
+				discountCouponAmount = (BigDecimal)map.get("discountCouponAmount");
+				discountCouponDESC = (String)map.get("discountCouponDESC");
 			}
 			//产品满减券
 			List<String> discountList = productInfo.getDiscountList();
 			//计算满减券优惠后金额
 			BigDecimal discountListAmount = new BigDecimal(0);
 			if (ObjectUtils.isNotEmpty(discountList)) {
-				BigDecimal discountAmount1 = new BigDecimal(0);
-				BigDecimal discountAmount2 = new BigDecimal(0);
-				if (discountList.contains(Constant.DISCOUNT_LIST_DESC_3000)) {
-					discountAmount1 = new BigDecimal(350)
-							.multiply(subTotal.divideToIntegralValue(new BigDecimal(3000)));
-				} else if (discountList.contains(Constant.DISCOUNT_LIST_DESC_2000)) {
-					discountAmount1 = new BigDecimal(30)
-							.multiply(subTotal.divideToIntegralValue(new BigDecimal(2000)));
-				} else if (discountList.contains(Constant.DISCOUNT_LIST_DESC_1000)) {
-					discountAmount1 = new BigDecimal(10)
-							.multiply(subTotal.divideToIntegralValue(new BigDecimal(1000)));
-				}
-				if (amount.compareTo(new BigDecimal(3)) > -1) {
-					if (discountList.contains(Constant.DISCOUNT_LIST_DESC_01)) {
-						discountAmount2 = discountAmount2.subtract(productInfo.getPrice().divide(new BigDecimal(2)));
-					}
-					if (amount.compareTo(new BigDecimal(3)) == 1
-							&& discountList.contains(Constant.DISCOUNT_LIST_DESC_02)) {
-						discountAmount2 = discountAmount2.subtract(productInfo.getPrice());
-					}
-				}
-				discountListAmount = discountAmount1.compareTo(discountAmount2) == 1 ? discountAmount1
-						: discountAmount2;
+				discountListAmount = getDiscountCouponAmount(discountList, subTotal, amount, productInfo);
 			}
 			if(discountCouponAmount.compareTo(BigDecimal.ZERO) ==0 && discountListAmount.compareTo(BigDecimal.ZERO) == 0){
 				continue;
@@ -200,6 +165,66 @@ public class Sales {
 		}
 		return list;
 	}
+
+	/**
+	 * 计算优惠券优惠后金额
+	 * @param discounts
+	 * @param discountCoupon
+	 * @param subTotal
+	 * @return map
+	 */
+	private static Map<String, Object> getDiscountCouponAmount(List<String> discounts, String discountCoupon, BigDecimal subTotal) {
+		Map<String, Object> map = new HashMap<>();
+		if(Constant.DISCOUNT_COUPON_DESC_90.equals(discountCoupon)){
+			if(discounts.contains(discountCoupon)){
+				//计算9折优惠后金额
+				map.put("discountCouponAmount", subTotal.multiply(new BigDecimal("0.1")));
+				map.put("discountCouponDESC", Constant.DISCOUNT_COUPON_DESC_90);
+			}
+		}else if(Constant.DISCOUNT_COUPON_DESC_95.equals(discountCoupon)){
+			if(discounts.contains(discountCoupon)){
+				//计算95折优惠后金额
+				map.put("discountCouponAmount", subTotal.multiply(new BigDecimal("0.05")));
+				map.put("discountCouponDESC", Constant.DISCOUNT_COUPON_DESC_95);
+			}
+		}
+		return map;
+	}
+
+	/**
+	 * 计算满减券优惠后金额
+	 * @param discountList
+	 * @param subTotal
+	 * @param amount
+	 * @param productInfo
+	 * @return discountListAmount
+	 */
+	private static BigDecimal getDiscountCouponAmount(List<String> discountList, BigDecimal subTotal, BigDecimal amount, ProductInfo productInfo) {
+		BigDecimal discountAmount1 = new BigDecimal(0);
+		BigDecimal discountAmount2 = new BigDecimal(0);
+		if (discountList.contains(Constant.DISCOUNT_LIST_DESC_3000)) {
+			discountAmount1 = new BigDecimal(350)
+					.multiply(subTotal.divideToIntegralValue(new BigDecimal(3000)));
+		} else if (discountList.contains(Constant.DISCOUNT_LIST_DESC_2000)) {
+			discountAmount1 = new BigDecimal(30)
+					.multiply(subTotal.divideToIntegralValue(new BigDecimal(2000)));
+		} else if (discountList.contains(Constant.DISCOUNT_LIST_DESC_1000)) {
+			discountAmount1 = new BigDecimal(10)
+					.multiply(subTotal.divideToIntegralValue(new BigDecimal(1000)));
+		}
+		if (amount.compareTo(new BigDecimal(3)) > -1) {
+			if (discountList.contains(Constant.DISCOUNT_LIST_DESC_01)) {
+				discountAmount2 = discountAmount2.subtract(productInfo.getPrice().divide(new BigDecimal(2)));
+			}
+			if (amount.compareTo(new BigDecimal(3)) == 1
+					&& discountList.contains(Constant.DISCOUNT_LIST_DESC_02)) {
+				discountAmount2 = discountAmount2.subtract(productInfo.getPrice());
+			}
+		}
+		return discountAmount1.compareTo(discountAmount2) == 1 ? discountAmount1
+				: discountAmount2;
+	}
+
 	/**
 	 * 获取支付信息
 	 * @param paymentCommandList
