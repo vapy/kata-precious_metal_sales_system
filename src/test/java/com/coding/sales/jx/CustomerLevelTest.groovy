@@ -1,17 +1,15 @@
 package com.coding.sales.jx
 
-import spock.lang.Shared
+
+import spock.lang.Specification
 import spock.lang.Unroll
-
-import javax.xml.transform.Result
-
 /**
  *
  * @author jixiang* @date 3:18 下午 2023/11/20
  * CustomerLevelTest 单元测试
  *
  * */
-class CustomerLevelTest extends spock.lang.Specification {
+class CustomerLevelTest extends Specification {
 
     @Unroll
     def "getCustomerLevel"() {
